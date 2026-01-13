@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KdU Rechner Bonn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: "Plus Jakarta Sans", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #kdu-rechner-bonn {
+            font-family: "Plus Jakarta Sans", Arial, sans-serif;
+            color: #000000; /* Restlicher Text schwarz */
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 2px;
+            border: 1px solid #e0e0e0;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        #kdu-rechner-bonn h2 {
+            color: rgb(0, 165, 209); /* Jobcenter Hellblau */
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        #kdu-rechner-bonn .disclaimer {
+            background-color: #fff4f4;
+            color: #c62828;
+            padding: 15px;
+            border-left: 5px solid #c62828;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        #kdu-rechner-bonn label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #232227; /* Überschriften-Farbe für Labels laut Vorgabe */
+            font-size: 15px;
+        }
+
+        #kdu-rechner-bonn input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            outline-color: rgb(0, 165, 209);
+        }
+
+        #kdu-rechner-bonn button {
+            background-color: rgb(0, 165, 209); /* Jobcenter Hellblau */
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 16px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 10px;
+            transition: opacity 0.2s ease;
+        }
+
+        #kdu-rechner-bonn button:hover {
+            opacity: 0.9;
+            background-color: #80b91d; /* Beibehalten des grünen Hover-Effekts oder alternativ dunkleres Blau */
+        }
+
+        #ergebnis {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            background-color: #f1f8fb;
+            border: 1px solid #d1e9f2;
+            display: none;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .status-indicator {
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="kdu-rechner-bonn">
+        <h2>Vorabprüfung Mietangebot</h2>
+        
+        <p class="disclaimer">
+            <strong>Wichtiger Hinweis:</strong><br>
+            Dies ist eine unverbindliche Orientierungshilfe. Für verbindliche Auskünfte kontaktieren Sie bitte direkt das Jobcenter Bonn.
+        </p>
+        
+        <form id="kdu-form-bonn">
+            <div class="form-group">
+                <label for="personen">Anzahl Personen im Haushalt</label>
+                <input type="number" id="personen" min="1" placeholder="z.B. 1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="bruttokaltmiete">Grundmiete (Kaltmiete) in €</label>
+                <input type="number" id="bruttokaltmiete" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="nebenkosten">Nebenkosten (kalt) in €</label>
+                <input type="number" id="nebenkosten" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="heizkosten">Heizkosten in €</label>
+                <input type="number" id="heizkosten" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="wohnflaeche">Wohnfläche in m²</label>
+                <input type="number" id="wohnflaeche" min="0" placeholder="z.B. 50" required>
+            </div>
+            
+            <button type="button" onclick="berechneKdUBonn()">Berechnung starten</button>
+        </form>
+        
+        <div id="ergebnis"></div>
+    </div>
+
+    <script>
+        // Werte basierend auf Jobcenter Richtlinien
+        const kduBasisGrenzen = [614, 784, 931, 1098, 1263];
+        const basisFlaechen = [50, 65, 80, 95, 110];
+        const zusaetzlicheKduProPerson = 190;
+        const zusaetzlicheFlaecheProPerson = 15;
+        const defaultHeizProM2 = 1.8;
+        
+        function getAngemesseneGrenzeKdu(personen) {
+            if (personen <= 5) return kduBasisGrenzen[personen - 1];
+            return kduBasisGrenzen[4] + (personen - 5) * zusaetzlicheKduProPerson;
+        }
+        
+        function getAngemesseneFlaeche(personen) {
+            if (personen <= 5) return basisFlaechen[personen - 1];
+            return basisFlaechen[4] + (personen - 5) * zusaetzlicheFlaecheProPerson;
+        }
+        
+        function berechneKdUBonn() {
+            const personen = parseInt(document.getElementById('personen').value);
+            const bruttokaltmiete = parseFloat(document.getElementById('bruttokaltmiete').value) || 0;
+            const nebenkosten = parseFloat(document.getElementById('nebenkosten').value) || 0;
+            const heizkosten = parseFloat(document.getElementById('heizkosten').value) || 0;
+            const wohnflaeche = parseFloat(document.getElementById('wohnflaeche').value);
+            
+            if (!personen || !wohnflaeche) {
+                alert('Bitte füllen Sie mindestens Personenanzahl und Wohnfläche aus.');
+                return;
+            }
+            
+            const grenzeKdu = getAngemesseneGrenzeKdu(personen);
+            const kaltmieteGesamt = bruttokaltmiete + nebenkosten;
+            const istAngemessenKdu = kaltmieteGesamt <= grenzeKdu;
+            
+            const angemesseneFlaeche = getAngemesseneFlaeche(personen);
+            const grenzeHeiz = defaultHeizProM2 * angemesseneFlaeche;
+            const anteilHeiz = (angemesseneFlaeche / wohnflaeche) * heizkosten;
+            const istAngemessenHeiz = anteilHeiz <= (heizkosten > 0 ? grenzeHeiz : 0);
+            
+            const ergDiv = document.getElementById('ergebnis');
+            ergDiv.style.display = 'block';
+
+            let html = `<h3 style="color:#232227; margin-top:0; font-size:20px; margin-bottom:15px;">Ergebnis der Vorabprüfung:</h3>`;
+            
+            // Kaltmiete
+            html += `<div class="result-item" style="color: ${istAngemessenKdu ? '#2e7d32' : '#d32f2f'};">`;
+            html += `<span class="status-indicator" style="background-color: ${istAngemessenKdu ? '#4CAF50' : '#F44336'};"></span>`;
+            html += `Kaltmiete: ${istAngemessenKdu ? 'Voraussichtlich angemessen' : 'Nicht angemessen'}</div>`;
+            
+            // Heizkosten
+            html += `<div class="result-item" style="color: ${istAngemessenHeiz ? '#2e7d32' : '#d32f2f'};">`;
+            html += `<span class="status-indicator" style="background-color: ${istAngemessenHeiz ? '#4CAF50' : '#F44336'};"></span>`;
+            html += `Heizkosten: ${istAngemessenHeiz ? 'Voraussichtlich angemessen' : 'Nicht angemessen'}</div>`;
+            
+            html += `<p style="font-size:14px; margin-top:15px; border-top:1px solid #ccc; padding-top:15px; color:#333;">`;
+            html += `Der aktuelle Richtwert für die Brutto-Kaltmiete bei <strong>${personen} Person(en)</strong> liegt bei <strong>${grenzeKdu.toFixed(2)} €</strong>.</p>`;
+            
+            ergDiv.innerHTML = html;
+            
+            // Scroll zum Ergebnis
+            ergDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
