@@ -20,7 +20,7 @@
 
         #kdu-rechner-bonn {
             font-family: "Plus Jakarta Sans", Arial, sans-serif;
-            color: #000000; /* Restlicher Text schwarz */
+            color: #000000;
             background-color: #ffffff;
             padding: 40px;
             border-radius: 2px;
@@ -31,7 +31,7 @@
         }
 
         #kdu-rechner-bonn h2 {
-            color: rgb(0, 165, 209); /* Jobcenter Hellblau */
+            color: rgb(0, 165, 209);
             font-size: 28px;
             font-weight: 700;
             margin-top: 0;
@@ -56,7 +56,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 700;
-            color: #232227; /* Überschriften-Farbe für Labels laut Vorgabe */
+            color: #232227;
             font-size: 15px;
         }
 
@@ -71,7 +71,7 @@
         }
 
         #kdu-rechner-bonn button {
-            background-color: rgb(0, 165, 209); /* Jobcenter Hellblau */
+            background-color: rgb(0, 165, 209);
             color: #ffffff;
             border: none;
             border-radius: 4px;
@@ -86,7 +86,7 @@
 
         #kdu-rechner-bonn button:hover {
             opacity: 0.9;
-            background-color: #80b91d; /* Beibehalten des grünen Hover-Effekts oder alternativ dunkleres Blau */
+            background-color: #80b91d;
         }
 
         #ergebnis {
@@ -158,21 +158,21 @@
     </div>
 
     <script>
-        // Werte basierend auf Jobcenter Richtlinien
-        const kduBasisGrenzen = [614, 784, 931, 1098, 1263];
-        const basisFlaechen = [50, 65, 80, 95, 110];
-        const zusaetzlicheKduProPerson = 190;
+        // Werte basierend auf Jobcenter Richtlinien (Gültig ab 01.07.2026)
+        const kduBasisGrenzen = [642, 842, 986, 1180, 1366, 1569, 1735, 1913];
+        const basisFlaechen = [50, 65, 80, 95, 110, 125, 140, 155];
+        const zusaetzlicheKduProPerson = 178; // Differenz für jede weitere Person ab der 9. Person
         const zusaetzlicheFlaecheProPerson = 15;
         const defaultHeizProM2 = 1.8;
         
         function getAngemesseneGrenzeKdu(personen) {
-            if (personen <= 5) return kduBasisGrenzen[personen - 1];
-            return kduBasisGrenzen[4] + (personen - 5) * zusaetzlicheKduProPerson;
+            if (personen <= 8) return kduBasisGrenzen[personen - 1];
+            return kduBasisGrenzen[7] + (personen - 8) * zusaetzlicheKduProPerson;
         }
         
         function getAngemesseneFlaeche(personen) {
-            if (personen <= 5) return basisFlaechen[personen - 1];
-            return basisFlaechen[4] + (personen - 5) * zusaetzlicheFlaecheProPerson;
+            if (personen <= 8) return basisFlaechen[personen - 1];
+            return basisFlaechen[7] + (personen - 8) * zusaetzlicheFlaecheProPerson;
         }
         
         function berechneKdUBonn() {
@@ -207,18 +207,4 @@
             html += `Kaltmiete: ${istAngemessenKdu ? 'Voraussichtlich angemessen' : 'Nicht angemessen'}</div>`;
             
             // Heizkosten
-            html += `<div class="result-item" style="color: ${istAngemessenHeiz ? '#2e7d32' : '#d32f2f'};">`;
-            html += `<span class="status-indicator" style="background-color: ${istAngemessenHeiz ? '#4CAF50' : '#F44336'};"></span>`;
-            html += `Heizkosten: ${istAngemessenHeiz ? 'Voraussichtlich angemessen' : 'Nicht angemessen'}</div>`;
-            
-            html += `<p style="font-size:14px; margin-top:15px; border-top:1px solid #ccc; padding-top:15px; color:#333;">`;
-            html += `Der aktuelle Richtwert für die Brutto-Kaltmiete bei <strong>${personen} Person(en)</strong> liegt bei <strong>${grenzeKdu.toFixed(2)} €</strong>.</p>`;
-            
-            ergDiv.innerHTML = html;
-            
-            // Scroll zum Ergebnis
-            ergDiv.scrollIntoView({ behavior: 'smooth' });
-        }
-    </script>
-</body>
-</html>
+            html += `<div class="result-item" style="color: ${istAngemessenHeiz ? '#2e7d32' : '#d32f2
