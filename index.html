@@ -125,7 +125,7 @@
             Dies ist eine unverbindliche Orientierungshilfe. Für verbindliche Auskünfte kontaktieren Sie bitte direkt das Jobcenter Bonn.
         </p>
         
-        <form id="kdu-form-bonn">
+        <form id="kdu-form-bonn" onsubmit="event.preventDefault(); berechneKdUBonn();">
             <div class="form-group">
                 <label for="personen">Anzahl Personen im Haushalt</label>
                 <input type="number" id="personen" min="1" placeholder="z.B. 1" required>
@@ -133,35 +133,35 @@
             
             <div class="form-group">
                 <label for="bruttokaltmiete">Grundmiete (Kaltmiete) in €</label>
-                <input type="number" id="bruttokaltmiete" step="0.01" min="0" placeholder="0.00" required>
+                <input type="number" id="bruttokaltmiete" step="0.01" min="0" placeholder="0.00">
             </div>
             
             <div class="form-group">
                 <label for="nebenkosten">Nebenkosten (kalt) in €</label>
-                <input type="number" id="nebenkosten" step="0.01" min="0" placeholder="0.00" required>
+                <input type="number" id="nebenkosten" step="0.01" min="0" placeholder="0.00">
             </div>
             
             <div class="form-group">
                 <label for="heizkosten">Heizkosten in €</label>
-                <input type="number" id="heizkosten" step="0.01" min="0" placeholder="0.00" required>
+                <input type="number" id="heizkosten" step="0.01" min="0" placeholder="0.00">
             </div>
             
             <div class="form-group">
                 <label for="wohnflaeche">Wohnfläche in m²</label>
-                <input type="number" id="wohnflaeche" min="0" placeholder="z.B. 50" required>
+                <input type="number" id="wohnflaeche" min="1" placeholder="z.B. 50" required>
             </div>
             
-            <button type="button" onclick="berechneKdUBonn()">Berechnung starten</button>
+            <button type="submit">Berechnung starten</button>
         </form>
         
         <div id="ergebnis"></div>
     </div>
 
     <script>
-        // Werte basierend auf Jobcenter Richtlinien (Gültig ab 01.07.2026)
+        // Richtwerte ab 01.07.2026
         const kduBasisGrenzen = [642, 842, 986, 1180, 1366, 1569, 1735, 1913];
         const basisFlaechen = [50, 65, 80, 95, 110, 125, 140, 155];
-        const zusaetzlicheKduProPerson = 178; // Differenz für jede weitere Person ab der 9. Person
+        const zusaetzlicheKduProPerson = 178; 
         const zusaetzlicheFlaecheProPerson = 15;
         const defaultHeizProM2 = 1.8;
         
@@ -176,16 +176,20 @@
         }
         
         function berechneKdUBonn() {
-            const personen = parseInt(document.getElementById('personen').value);
+            const personenInput = document.getElementById('personen').value;
+            const wohnflaecheInput = document.getElementById('wohnflaeche').value;
+
+            const personen = parseInt(personenInput);
+            const wohnflaeche = parseFloat(wohnflaecheInput);
+            
+            if (isNaN(personen) || personen < 1 || isNaN(wohnflaeche) || wohnflaeche <= 0) {
+                alert('Bitte geben Sie eine gültige Personenanzahl und Wohnfläche ein.');
+                return;
+            }
+
             const bruttokaltmiete = parseFloat(document.getElementById('bruttokaltmiete').value) || 0;
             const nebenkosten = parseFloat(document.getElementById('nebenkosten').value) || 0;
             const heizkosten = parseFloat(document.getElementById('heizkosten').value) || 0;
-            const wohnflaeche = parseFloat(document.getElementById('wohnflaeche').value);
-            
-            if (!personen || !wohnflaeche) {
-                alert('Bitte füllen Sie mindestens Personenanzahl und Wohnfläche aus.');
-                return;
-            }
             
             const grenzeKdu = getAngemesseneGrenzeKdu(personen);
             const kaltmieteGesamt = bruttokaltmiete + nebenkosten;
@@ -193,18 +197,32 @@
             
             const angemesseneFlaeche = getAngemesseneFlaeche(personen);
             const grenzeHeiz = defaultHeizProM2 * angemesseneFlaeche;
-            const anteilHeiz = (angemesseneFlaeche / wohnflaeche) * heizkosten;
-            const istAngemessenHeiz = anteilHeiz <= (heizkosten > 0 ? grenzeHeiz : 0);
+            
+            // Umrechnung Heizkosten auf angemessene Wohnfläche
+            const berechneteHeizkosten = (angemesseneFlaeche / wohnflaeche) * heizkosten;
+            const istAngemessenHeiz = heizkosten === 0 || berechneteHeizkosten <= grenzeHeiz;
             
             const ergDiv = document.getElementById('ergebnis');
             ergDiv.style.display = 'block';
 
             let html = `<h3 style="color:#232227; margin-top:0; font-size:20px; margin-bottom:15px;">Ergebnis der Vorabprüfung:</h3>`;
             
-            // Kaltmiete
+            // Kaltmiete Status
             html += `<div class="result-item" style="color: ${istAngemessenKdu ? '#2e7d32' : '#d32f2f'};">`;
             html += `<span class="status-indicator" style="background-color: ${istAngemessenKdu ? '#4CAF50' : '#F44336'};"></span>`;
             html += `Kaltmiete: ${istAngemessenKdu ? 'Voraussichtlich angemessen' : 'Nicht angemessen'}</div>`;
             
-            // Heizkosten
-            html += `<div class="result-item" style="color: ${istAngemessenHeiz ? '#2e7d32' : '#d32f2
+            // Heizkosten Status
+            html += `<div class="result-item" style="color: ${istAngemessenHeiz ? '#2e7d32' : '#d32f2f'};">`;
+            html += `<span class="status-indicator" style="background-color: ${istAngemessenHeiz ? '#4CAF50' : '#F44336'};"></span>`;
+            html += `Heizkosten: ${istAngemessenHeiz ? 'Voraussichtlich angemessen' : 'Nicht angemessen'}</div>`;
+            
+            html += `<p style="font-size:14px; margin-top:15px; border-top:1px solid #ccc; padding-top:15px; color:#333;">`;
+            html += `Der aktuelle Richtwert für die Brutto-Kaltmiete bei <strong>${personen} Person(en)</strong> liegt bei <strong>${grenzeKdu.toFixed(2)} €</strong> (Stand: 01.07.2026).</p>`;
+            
+            ergDiv.innerHTML = html;
+            ergDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
